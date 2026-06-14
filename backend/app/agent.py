@@ -4,15 +4,14 @@ import uuid
 import httpx
 import asyncio
 import logging
-from typing import Dict
+from typing import Dict, Optional
 from datetime import datetime
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 from langchain_groq import ChatGroq
-from langchain.agents import AgentExecutor, create_react_agent
 from langchain.memory import ConversationBufferMemory
 from langchain.tools import tool
-from langchain.prompts import PromptTemplate
 from langchain.callbacks.base import BaseCallbackHandler
 
 load_dotenv()
@@ -36,7 +35,10 @@ def get_memory(session_id: str) -> ConversationBufferMemory:
 
 # ─── Tools definitions ────────────────────────────────────────────────────────
 
-@tool
+class SearchSegmentInput(BaseModel):
+    filters: str
+
+@tool(args_schema=SearchSegmentInput)
 def search_segment(filters: str) -> str:
     """
     Find customers matching given filters.
@@ -71,7 +73,10 @@ def search_segment(filters: str) -> str:
     result = segmentation.query_segment(parsed)
     return json.dumps(result)
 
-@tool
+class DraftMessageInput(BaseModel):
+    input_str: str
+
+@tool(args_schema=DraftMessageInput)
 def draft_message(input_str: str) -> str:
     """
     Draft a marketing message.
@@ -125,7 +130,10 @@ Return ONLY a valid JSON object with the exact keys: "whatsapp", "email", and "s
         return json.dumps({"error": f"Error drafting message: {str(e)}", "raw_output": content if 'content' in locals() else ""})
 
 
-@tool
+class SendCampaignInput(BaseModel):
+    input_str: str
+
+@tool(args_schema=SendCampaignInput)
 def send_campaign(input_str: str) -> str:
     """
     Send a campaign to a segment.
@@ -284,7 +292,10 @@ def send_campaign(input_str: str) -> str:
         "count": len(customers)
     })
 
-@tool
+class GetCampaignStatsInput(BaseModel):
+    campaign_id: str
+
+@tool(args_schema=GetCampaignStatsInput)
 def get_campaign_stats(campaign_id: str) -> str:
     """Retrieves real-time analytics for a specific campaign ID. If no campaign ID is known, pass an empty string to get the most recent campaign's stats."""
     from app.database import supabase
@@ -326,7 +337,10 @@ def get_campaign_stats(campaign_id: str) -> str:
     except Exception as e:
         return json.dumps({"error": f"Failed to retrieve stats from database: {str(e)}"})
 
-@tool
+class DummyInput(BaseModel):
+    dummy: Optional[str] = ""
+
+@tool(args_schema=DummyInput)
 def get_brand_health_reviews(dummy: str = "") -> str:
     """
     Get the latest customer feedback, sentiment, and pain points from App Store, Play Store, and Twitter reviews.
@@ -342,7 +356,10 @@ def get_brand_health_reviews(dummy: str = "") -> str:
     ]
     return json.dumps(reviews)
 
-@tool
+class QueryInput(BaseModel):
+    query: Optional[str] = ""
+
+@tool(args_schema=QueryInput)
 def get_customer_insights(query: str = "") -> str:
     """
     Get customer insights like top 10 by spend, count by city/channel, new customers this month.
@@ -376,7 +393,10 @@ def get_customer_insights(query: str = "") -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
-@tool
+class PeriodInput(BaseModel):
+    period: Optional[str] = ""
+
+@tool(args_schema=PeriodInput)
 def get_revenue_insights(period: str = "") -> str:
     """
     Get revenue insights including this month vs last month, MOM change, top 5 cities by revenue, and average order value.
@@ -414,7 +434,7 @@ def get_revenue_insights(period: str = "") -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
-@tool
+@tool(args_schema=DummyInput)
 def get_campaign_overview(dummy: str = "") -> str:
     """
     Get an overview of all campaigns, including status, open rates, and best performing channels/campaigns.
@@ -485,7 +505,7 @@ def get_campaign_overview(dummy: str = "") -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
-@tool
+@tool(args_schema=DummyInput)
 def get_at_risk_customers(dummy: str = "") -> str:
     """
     Get at-risk customers across different segments to target for retention.
