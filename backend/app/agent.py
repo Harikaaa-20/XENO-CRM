@@ -68,22 +68,36 @@ def search_segment(**filters) -> str:
     result = segmentation.query_segment(parsed)
     return json.dumps(result)
 
-@tool
-def draft_message(channel: str = "whatsapp", brand: str = "Brew & Co", segment_summary: str = "our customers", tone: str = "warm") -> str:
+class DraftMessageInput(BaseModel):
+    channel: Optional[str] = "whatsapp"
+    brand: Optional[str] = "Brew & Co"
+    segment_summary: Optional[str] = "our customers"
+    tone: Optional[str] = "warm"
+    instructions: Optional[str] = "Write a compelling marketing campaign."
+
+@tool(args_schema=DraftMessageInput)
+def draft_message(**kwargs) -> str:
     """
-    Draft a marketing message.
+    Draft a marketing message based on specific instructions from the user.
     """
+    channel = kwargs.get("channel", "whatsapp")
+    brand = kwargs.get("brand", "Brew & Co")
+    segment_summary = kwargs.get("segment_summary", "our customers")
+    tone = kwargs.get("tone", "warm")
+    instructions = kwargs.get("instructions", "Write a compelling marketing campaign.")
+
     prompt_text = f"""You are an elite copywriter for {brand}, a premium consumer brand.
-Write a multi-channel win-back marketing campaign for this audience: {segment_summary}.
+Write a multi-channel marketing campaign targeting this audience: {segment_summary}.
+Campaign Objective & Instructions: {instructions}
 Tone: {tone}, engaging, and highly professional.
 
 CRITICAL INSTRUCTION: You MUST use the exact tag [Customer Name] in every single message so the system can dynamically personalize it.
-You MUST provide high-quality, creative, and compelling copy that includes an attractive offer (e.g., a discount or free shipping) to win them back. Do NOT just say "we miss you".
+You MUST follow the Campaign Objective & Instructions exactly. Provide creative, high-quality copy.
 
 Please write 3 distinct versions of the message:
-1. WhatsApp: 2-3 short sentences, conversational, warm, include 1-2 emojis, no markdown. Must include a clear offer and a call to action.
-2. Email: Catchy Subject line + engaging Body text (2 short paragraphs). Make it feel personal and premium, highlighting what's new.
-3. SMS: max 160 chars, punchy, urgent, include a clear short CTA link with the offer.
+1. WhatsApp: 2-3 short sentences, conversational, warm, include 1-2 emojis, no markdown.
+2. Email: Catchy Subject line + engaging Body text (2 short paragraphs). Make it feel personal and premium.
+3. SMS: max 160 chars, punchy, urgent, include a clear short CTA link.
 
 Return ONLY a valid JSON object with the exact keys: "whatsapp", "email", and "sms". Do not wrap it in markdown block quotes."""
     
