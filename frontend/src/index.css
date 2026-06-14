@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   XENO CRM — Design Token System
+   ============================================================ */
+:root {
+  /* Brand */
+  --brand:          #E8651A;
+  --brand-dim:      #E8651A1A;
+
+  /* Semantic */
+  --success:        #34C97A;
+  --warning:        #F5A623;
+  --danger:         #E05252;
+  --error:          #E05252;
+  --info:           #6B8CFF;
+  --violet:         #A78BFA;
+
+  /* Surface hierarchy */
+  --bg-base:        #0A0A0B;
+  --bg-sidebar:     #0D0D0F;
+  --bg-surface:     #111113;
+  --bg-elevated:    #18181B;
+  --bg-overlay:     rgba(0, 0, 0, 0.7);
+
+  /* Borders */
+  --border-subtle:  #1F1F23;
+  --border-default: #27272A;
+  --border-strong:  #323238;
+
+  /* Text */
+  --text-primary:   #FAFAFA;
+  --text-secondary: #D4D4D8;
+  --text-muted:     #71717A;
+
+  /* Typography */
+  --font-ui:        'Inter', system-ui, sans-serif;
+  --font-mono:      'DM Mono', 'Courier New', monospace;
+
+  /* Shadows */
+  --shadow-elevated: 0 1px 1px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+body {
+  font-family: var(--font-ui);
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
