@@ -111,6 +111,42 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          <div className="bg-surface border border-border-subtle rounded-[12px] p-6 shadow-inset">
+            <h2 className="text-[15px] font-semibold text-text-primary mb-4">Data Sync</h2>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-[12px] font-medium text-text-muted">Import Customers (CSV)</label>
+                <div className="flex items-center gap-3">
+                  <input 
+                    type="file" 
+                    accept=".csv"
+                    className="flex-1 bg-base border border-border-subtle rounded-[6px] px-3 py-2 text-[12px] text-text-primary file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[11px] file:font-medium file:bg-brand/10 file:text-brand hover:file:bg-brand/20 cursor-pointer"
+                    onChange={async (e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      try {
+                        alert("Uploading...");
+                        const { uploadCSV } = await import('../api');
+                        const res = await uploadCSV(file);
+                        alert(`Success! Inserted: ${res.inserted}, Skipped: ${res.skipped}`);
+                        e.target.value = null; // reset
+                      } catch (err) {
+                        alert("Failed to upload CSV");
+                        console.error(err);
+                      }
+                    }}
+                  />
+                  <button className="px-4 py-2 bg-elevated border border-border-subtle rounded-[6px] text-[12px] font-medium text-text-primary hover:bg-surface transition-colors">
+                    Download Template
+                  </button>
+                </div>
+                <p className="text-[11px] text-text-muted mt-1">
+                  Required columns: <code className="bg-elevated px-1 py-0.5 rounded border border-border-subtle text-[10px]">name, email, phone, city, channel</code>
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="flex justify-end mt-2">
             <button className="bg-brand text-white text-[13px] font-medium px-5 py-2 rounded-[6px] hover:bg-opacity-90 transition-all shadow-lg shadow-brand/20">
               Save Changes

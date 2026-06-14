@@ -31,6 +31,7 @@ function SidebarNav({ isOpen, onClose }) {
     { path: '/overview', label: 'Overview', icon: LayoutDashboard },
     { path: '/customers', label: 'Customers', icon: Users },
     { path: '/campaigns', label: 'Campaigns', icon: FolderKanban },
+    { path: '/analytics', label: 'Analytics', icon: Activity },
     { path: '/brand-health', label: 'Brand Health', icon: HeartPulse },
   ];
 
@@ -223,6 +224,7 @@ export default function App() {
         <Route path="/customers" element={<MainLayout><CustomersPage /></MainLayout>} />
         <Route path="/campaigns" element={<MainLayout><CampaignsPage /></MainLayout>} />
         <Route path="/campaigns/:id" element={<MainLayout><CampaignDetailPage /></MainLayout>} />
+        <Route path="/analytics" element={<MainLayout><AnalyticsPage /></MainLayout>} />
         <Route path="/brand-health" element={<MainLayout><BrandHealthPage /></MainLayout>} />
         <Route path="/ai-assistant" element={<MainLayout><ChatPage /></MainLayout>} />
         <Route path="/settings" element={<MainLayout><SettingsPage /></MainLayout>} />

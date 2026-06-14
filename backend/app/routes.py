@@ -163,6 +163,64 @@ async def upload_csv(file: UploadFile = File(...)):
         logger.error(f"CSV Ingestion Error: {e}")
         raise HTTPException(status_code=500, detail=f"CSV upload failed: {str(e)}")
 
+# ─── Analytics ────────────────────────────────────────────────────────────────
+
+@router.get("/analytics/overview")
+async def get_analytics_overview():
+    """
+    Returns high-level analytics for the Analytics Dashboard.
+    """
+    try:
+        # 1. Get high-level stats across all communications
+        stats_query = """
+            SELECT 
+                COUNT(*) as total_sent,
+                COUNT(*) FILTER (WHERE status IN ('opened', 'clicked')) as total_opened,
+                COUNT(*) FILTER (WHERE status = 'clicked') as total_clicked
+            FROM communications
+            WHERE status != 'pending'
+        """
+        res_stats = supabase.rpc("exec_sql", {"sql": stats_query}).execute()
+        stats_data = res_stats.data[0] if res_stats.data else {"total_sent": 0, "total_opened": 0, "total_clicked": 0}
+        
+        sent = stats_data.get("total_sent", 0) or 0
+        opened = stats_data.get("total_opened", 0) or 0
+        clicked = stats_data.get("total_clicked", 0) or 0
+        
+        open_rate = round((opened / sent * 100), 1) if sent > 0 else 0.0
+        click_rate = round((clicked / sent * 100), 1) if sent > 0 else 0.0
+
+        # 2. Get last 7 days funnel data
+        funnel_query = """
+            WITH dates AS (
+                SELECT current_date - i AS d
+                FROM generate_series(6, 0, -1) i
+            )
+            SELECT 
+                TO_CHAR(dates.d, 'Dy') as name,
+                COUNT(c.id) as "Sent",
+                COUNT(c.id) FILTER (WHERE c.status IN ('opened', 'clicked')) as "Opened",
+                COUNT(c.id) FILTER (WHERE c.status = 'clicked') as "Clicked"
+            FROM dates
+            LEFT JOIN communications c ON DATE(c.sent_at) = dates.d
+            GROUP BY dates.d
+            ORDER BY dates.d ASC;
+        """
+        res_funnel = supabase.rpc("exec_sql", {"sql": funnel_query}).execute()
+        funnel_data = res_funnel.data or []
+
+        return {
+            "stats": {
+                "sent": sent,
+                "openRate": open_rate,
+                "clickRate": click_rate
+            },
+            "funnel_data": funnel_data
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch analytics overview: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch analytics: {str(e)}")
+
 # ─── Campaigns ────────────────────────────────────────────────────────────────
 
 @router.get("/campaigns")

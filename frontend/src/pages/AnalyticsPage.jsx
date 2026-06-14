@@ -1,17 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Activity, MousePointerClick, MailOpen, Send } from 'lucide-react';
+import { getAnalyticsOverview } from '../api';
 
 export default function AnalyticsPage() {
-  const data = [
-    { name: 'Mon', Sent: 4000, Opened: 2400, Clicked: 1400 },
-    { name: 'Tue', Sent: 3000, Opened: 1398, Clicked: 900 },
-    { name: 'Wed', Sent: 2000, Opened: 9800, Clicked: 2908 },
-    { name: 'Thu', Sent: 2780, Opened: 3908, Clicked: 2000 },
-    { name: 'Fri', Sent: 1890, Opened: 4800, Clicked: 2181 },
-    { name: 'Sat', Sent: 2390, Opened: 3800, Clicked: 2500 },
-    { name: 'Sun', Sent: 3490, Opened: 4300, Clicked: 2100 },
-  ];
+  const [data, setData] = useState([]);
+  const [stats, setStats] = useState({ sent: 0, openRate: 0, clickRate: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getAnalyticsOverview().then(res => {
+      if (res.funnel_data) setData(res.funnel_data);
+      if (res.stats) setStats(res.stats);
+      setLoading(false);
+    }).catch(err => {
+      console.error(err);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center h-full min-h-[500px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+          <span className="text-[13px] text-text-muted font-medium">Loading analytics...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-[1200px] mx-auto w-full flex flex-col gap-8">
@@ -24,9 +41,9 @@ export default function AnalyticsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { icon: Send, label: 'Total Sent', value: '24,540', color: 'text-brand' },
-          { icon: MailOpen, label: 'Avg Open Rate', value: '42.8%', color: 'text-[#6B8CFF]' },
-          { icon: MousePointerClick, label: 'Avg Click Rate', value: '18.2%', color: 'text-[#34C97A]' }
+          { icon: Send, label: 'Total Sent', value: stats.sent.toLocaleString(), color: 'text-brand' },
+          { icon: MailOpen, label: 'Avg Open Rate', value: `${stats.openRate}%`, color: 'text-[#6B8CFF]' },
+          { icon: MousePointerClick, label: 'Avg Click Rate', value: `${stats.clickRate}%`, color: 'text-[#34C97A]' }
         ].map((stat, i) => (
           <div key={i} className="bg-surface rounded-[12px] p-5 border border-border-subtle shadow-inset flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-elevated border border-border-subtle flex items-center justify-center">
