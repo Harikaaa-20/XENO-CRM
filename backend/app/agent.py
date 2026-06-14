@@ -36,65 +36,43 @@ def get_memory(session_id: str) -> ConversationBufferMemory:
 # ─── Tools definitions ────────────────────────────────────────────────────────
 
 class SearchSegmentInput(BaseModel):
-    filters: str
+    inactive_days: Optional[int] = None
+    active_days: Optional[int] = None
+    min_spend: Optional[float] = None
+    max_spend: Optional[float] = None
+    min_orders: Optional[int] = None
+    max_orders: Optional[int] = None
+    city: Optional[str] = None
+    tier: Optional[str] = None
+    channel: Optional[str] = None
+    min_avg_order: Optional[float] = None
+    product: Optional[str] = None
+    joined_last_days: Optional[int] = None
+    never_bought_product: Optional[str] = None
+    min_total_items: Optional[int] = None
+    single_order_value_over: Optional[float] = None
+    email_domain: Optional[str] = None
 
 @tool(args_schema=SearchSegmentInput)
-def search_segment(filters: str) -> str:
+def search_segment(**filters) -> str:
     """
     Find customers matching given filters.
-    Input: JSON string with optional keys:
-      - inactive_days (int): customers with no order in last N days
-      - active_days (int): customers who ordered within last N days
-      - min_spend (float): minimum total spend
-      - max_spend (float): maximum total spend
-      - min_orders (int): minimum number of orders
-      - max_orders (int): maximum number of orders
-      - city (str): filter by city
-      - tier (str): high_value | regular | at_risk | lapsed
-      - channel (str): preferred channel
-      - min_avg_order (float): minimum average order value
-      - product (str): filter by specific product purchased
-      - joined_last_days (int): customers joined in the last N days
-      - never_bought_product (str): filter to exclude buyers of a specific product
-      - min_total_items (int): minimum total quantity of items purchased
-      - single_order_value_over (float): minimum threshold for at least one single order
-      - email_domain (str): filter by email domain (e.g. gmail.com)
     Returns: count, avg_spend, channel breakdown, sample names
     """
     from app import segmentation
     try:
-        clean_filters = filters.strip().strip('`').strip()
-        if clean_filters.startswith('json\n'):
-            clean_filters = clean_filters[5:]
-        parsed = json.loads(clean_filters)
+        parsed = {k: v for k, v in filters.items() if v is not None}
     except Exception as e:
-        return json.dumps({"error": f"Invalid JSON format for filters input: {str(e)}"})
+        return json.dumps({"error": f"Invalid format for filters input: {str(e)}"})
     
     result = segmentation.query_segment(parsed)
     return json.dumps(result)
 
-class DraftMessageInput(BaseModel):
-    input_str: str
-
-@tool(args_schema=DraftMessageInput)
-def draft_message(input_str: str) -> str:
+@tool
+def draft_message(channel: str = "whatsapp", brand: str = "Brew & Co", segment_summary: str = "our customers", tone: str = "warm") -> str:
     """
     Draft a marketing message.
-    Input: JSON string with optional keys: channel, brand, segment_summary, tone
-    Returns: JSON string with 'whatsapp', 'email', and 'sms' drafts.
     """
-    try:
-        clean_input = input_str.strip().strip('`').strip()
-        if clean_input.startswith('json\n'):
-            clean_input = clean_input[5:]
-        data = json.loads(clean_input)
-    except Exception:
-        data = {}
-        
-    brand = data.get("brand", "Brew & Co")
-    segment_summary = data.get("segment_summary", "our customers")
-    tone = data.get("tone", "warm")
-    
     prompt_text = f"""You are an elite copywriter for {brand}, a premium consumer brand.
 Write a multi-channel win-back marketing campaign for this audience: {segment_summary}.
 Tone: {tone}, engaging, and highly professional.
@@ -109,59 +87,34 @@ Please write 3 distinct versions of the message:
 Return ONLY a valid JSON object with the exact keys: "whatsapp", "email", and "sms". Do not wrap it in markdown block quotes."""
     
     try:
-        temp_llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7)
+        temp_llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7, api_key=API_KEY)
         res = temp_llm.invoke(prompt_text)
         
         content = res.content.strip()
         
-        # Try to find JSON block if there's conversational text around it
         import re
         json_match = re.search(r'\{[\s\S]*\}', content)
         if json_match:
             content = json_match.group(0)
 
-        # Remove invalid control characters that break json.loads (e.g. raw newlines in strings)
         content = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', content)
             
-        # Ensure it's valid JSON
         parsed = json.loads(content)
         return json.dumps(parsed)
     except Exception as e:
         return json.dumps({"error": f"Error drafting message: {str(e)}", "raw_output": content if 'content' in locals() else ""})
 
 
-class SendCampaignInput(BaseModel):
-    input_str: str
-
-@tool(args_schema=SendCampaignInput)
-def send_campaign(input_str: str) -> str:
+@tool
+def send_campaign(name: str = "Campaign", segment_rule: dict = None, message: str = "", channel: str = "whatsapp", scheduled_at: str = None) -> str:
     """
     Send a campaign to a segment.
-    Input: JSON string with keys:
-      - name (str): campaign name
-      - segment_rule (dict): the filter object
-      - message (str): the drafted message
-      - channel (str): delivery channel
-      - scheduled_at (str): optional ISO 8601 timestamp string if scheduled for later (e.g. 2026-06-15T10:00:00Z)
-    Returns: campaign_id, count of messages sent/scheduled
-    Returns: campaign_id, count of messages sent
     """
     from app.database import supabase
     from app.segmentation import build_segment_query
 
-    try:
-        clean_input = input_str.strip().strip('`').strip()
-        if clean_input.startswith('json\n'):
-            clean_input = clean_input[5:]
-        data = json.loads(clean_input)
-    except Exception as e:
-        return json.dumps({"error": f"Input must be a valid JSON string: {str(e)}"})
-        
-    name = data.get("name", "Campaign")
-    segment_rule = data.get("segment_rule", {})
-    message = data.get("message", "")
-    channel = data.get("channel", "whatsapp")
-    scheduled_at = data.get("scheduled_at", None)
+    if segment_rule is None:
+        segment_rule = {}
     
     campaign_id = str(uuid.uuid4())
     now_str = datetime.utcnow().isoformat() + "Z"
@@ -292,11 +245,8 @@ def send_campaign(input_str: str) -> str:
         "count": len(customers)
     })
 
-class GetCampaignStatsInput(BaseModel):
-    campaign_id: str
-
-@tool(args_schema=GetCampaignStatsInput)
-def get_campaign_stats(campaign_id: str) -> str:
+@tool
+def get_campaign_stats(campaign_id: str = "") -> str:
     """Retrieves real-time analytics for a specific campaign ID. If no campaign ID is known, pass an empty string to get the most recent campaign's stats."""
     from app.database import supabase
     import re
@@ -337,11 +287,8 @@ def get_campaign_stats(campaign_id: str) -> str:
     except Exception as e:
         return json.dumps({"error": f"Failed to retrieve stats from database: {str(e)}"})
 
-class DummyInput(BaseModel):
-    dummy: Optional[str] = ""
-
-@tool(args_schema=DummyInput)
-def get_brand_health_reviews(dummy: str = "") -> str:
+@tool
+def get_brand_health_reviews() -> str:
     """
     Get the latest customer feedback, sentiment, and pain points from App Store, Play Store, and Twitter reviews.
     Returns: JSON string containing recent customer reviews.
@@ -356,11 +303,8 @@ def get_brand_health_reviews(dummy: str = "") -> str:
     ]
     return json.dumps(reviews)
 
-class QueryInput(BaseModel):
-    query: Optional[str] = ""
-
-@tool(args_schema=QueryInput)
-def get_customer_insights(query: str = "") -> str:
+@tool
+def get_customer_insights() -> str:
     """
     Get customer insights like top 10 by spend, count by city/channel, new customers this month.
     """
@@ -393,11 +337,8 @@ def get_customer_insights(query: str = "") -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
-class PeriodInput(BaseModel):
-    period: Optional[str] = ""
-
-@tool(args_schema=PeriodInput)
-def get_revenue_insights(period: str = "") -> str:
+@tool
+def get_revenue_insights() -> str:
     """
     Get revenue insights including this month vs last month, MOM change, top 5 cities by revenue, and average order value.
     """
@@ -434,8 +375,8 @@ def get_revenue_insights(period: str = "") -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
-@tool(args_schema=DummyInput)
-def get_campaign_overview(dummy: str = "") -> str:
+@tool
+def get_campaign_overview() -> str:
     """
     Get an overview of all campaigns, including status, open rates, and best performing channels/campaigns.
     """
@@ -505,8 +446,8 @@ def get_campaign_overview(dummy: str = "") -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
-@tool(args_schema=DummyInput)
-def get_at_risk_customers(dummy: str = "") -> str:
+@tool
+def get_at_risk_customers() -> str:
     """
     Get at-risk customers across different segments to target for retention.
     """
@@ -609,9 +550,7 @@ async def run(message: str, session_id: str) -> dict:
             tool_fn = TOOLS_MAP.get(tool_name)
             if tool_fn:
                 try:
-                    # Extract the single string argument from the args dict
-                    arg_value = next(iter(tool_args.values()), "") if tool_args else ""
-                    tool_result = tool_fn.invoke(arg_value)
+                    tool_result = tool_fn.invoke(tool_args)
                 except Exception as e:
                     tool_result = json.dumps({"error": str(e)})
             else:

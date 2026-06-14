@@ -43,7 +43,7 @@ export default function AnalyticsPage() {
       <div className="bg-surface border border-border-subtle rounded-[12px] p-6 shadow-inset">
         <h2 className="text-[14px] font-semibold text-text-primary mb-6">Weekly Engagement Funnel</h2>
         <div className="h-[350px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <BarChart data={data} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
               <XAxis dataKey="name" stroke="#71717A" fontSize={12} tickLine={false} axisLine={false} />

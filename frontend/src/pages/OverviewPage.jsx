@@ -161,7 +161,7 @@ export default function OverviewPage() {
               <button className="text-[12px] text-text-muted hover:text-text-primary">View Report</button>
             </div>
             <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={revenueData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                   <XAxis dataKey="name" stroke="#71717A" fontSize={11} tickLine={false} axisLine={false} />
                   <Bar dataKey="value" fill="#6B8CFF" radius={[4, 4, 0, 0]} barSize={32} />
@@ -219,7 +219,7 @@ export default function OverviewPage() {
             <h2 className="text-[14px] font-semibold text-text-primary mb-6">Audience Breakdown</h2>
             <div className="flex-1 flex flex-col justify-center items-center relative">
               <div className="h-[180px] w-full relative">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <PieChart>
                     <Pie
                       data={pieData}
