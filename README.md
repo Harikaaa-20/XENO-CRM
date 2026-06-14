@@ -7,7 +7,7 @@
   [![React](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
   [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com/)
   [![LangChain](https://img.shields.io/badge/LangChain-Native%20Tool%20Calling-green.svg)](https://python.langchain.com/)
-  [![Model](https://img.shields.io/badge/Model-Llama%203.3%2070B-orange.svg)](https://groq.com/)
+  [![Model](https://img.shields.io/badge/Model-Gemini%202.5%20Flash-orange.svg)](https://aistudio.google.com/)
   [![DB](https://img.shields.io/badge/Database-Supabase-47C28C.svg)](https://supabase.com/)
 
   *Built as a Take-Home Assignment for Xeno.*
@@ -23,8 +23,10 @@ Our philosophy: **"Chat to Segment. Chat to Draft. Chat to Send."**
 
 ## ✨ Key Features
 
-- 🧠 **AI-Powered Customer Segmentation**: Built with a LangChain Tool-Calling Agent and powered by Groq's blazing-fast Llama 3.3 70B model. Ask, *"Find all customers in Mumbai who haven't ordered in the last 30 days"* and the AI maps it directly into dynamic PostgreSQL queries via Supabase.
+- 🧠 **AI-Powered Customer Segmentation**: Built with a LangChain Tool-Calling Agent and powered by **Gemini 2.5 Flash**. Ask, *"Find all customers in Mumbai who bought Cold Brew but haven't ordered in 30 days"* and the AI maps it directly into dynamic PostgreSQL queries via Supabase to instantly filter, retrieve, and show matching audience data.
 - ✍️ **Generative Campaign Copy**: The agent automatically drafts highly-converting, personalized marketing copy tailored to the targeted segment across WhatsApp, Email, and SMS.
+- 📊 **Interactive Analytics Dashboard**: A live, real-time Recharts dashboard that visualizes global sent/open/click metrics and engagement funnels.
+- 🔄 **Live Data Sync**: A seamless CSV ingest pipeline that automatically validates, deduplicates, and bulk-inserts new customer data directly into your CRM.
 - 🛡️ **"Human-in-the-Loop" Workflow**: The AI operates in a 3-step conversation (`Find` → `Draft` → `Send`), allowing marketers to review the audience size and the drafted copy before giving the final "Send" command.
 - 📡 **Mock Dispatch & Tracking**: Once dispatched, campaigns are handed off to an asynchronous Channel Service (simulating providers like Twilio/SendGrid) with exponential backoff retries and webhook delivery callbacks (Delivered, Opened, Clicked).
 - 🎨 **Premium Glassmorphic UI**: A stunning, responsive dark-mode dashboard built with React 19, Vite, Tailwind CSS, and Recharts.
@@ -38,7 +40,7 @@ flowchart LR
     UI["React Frontend"] --> Router["FastAPI Backend"]
     
     subgraph AI Engine
-        Agent["LangChain Agent"] <--> LLM["Groq Llama 3.3 70B"]
+        Agent["LangChain Agent"] <--> LLM["Gemini 2.5 Flash"]
         Agent --> Tools["Tools (Segment, Draft, Send)"]
     end
     
@@ -65,7 +67,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# Create a .env file with your SUPABASE_URL, SUPABASE_KEY, and GROQ_API_KEY
+# Create a .env file with your SUPABASE_URL, SUPABASE_KEY, and GEMINI_API_KEY
 uvicorn main:app --reload --port 8000
 ```
 
