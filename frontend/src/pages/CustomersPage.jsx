@@ -11,12 +11,19 @@ export default function CustomersPage() {
   const [filterTier, setFilterTier] = useState('All Tiers');
   const [filterCity, setFilterCity] = useState('All Cities');
   const [filterChannel, setFilterChannel] = useState('All Channels');
+  const [filterProduct, setFilterProduct] = useState('All Products');
   const itemsPerPage = 15;
 
   const fetchCustomers = async () => {
     setLoading(true);
     try {
-      const data = await getCustomers();
+      const filters = {};
+      if (filterTier !== 'All Tiers') filters.tier = filterTier.replace(' ', '_').toLowerCase();
+      if (filterCity !== 'All Cities') filters.city = filterCity;
+      if (filterChannel !== 'All Channels') filters.channel = filterChannel.toLowerCase();
+      if (filterProduct !== 'All Products') filters.product = filterProduct;
+
+      const data = await getCustomers(filters);
       setCustomers(data);
     } catch (err) {
       console.error(err);
@@ -27,7 +34,7 @@ export default function CustomersPage() {
 
   useEffect(() => {
     fetchCustomers();
-  }, []);
+  }, [filterTier, filterCity, filterChannel, filterProduct]);
 
   const handleSelectCustomer = async (c) => {
     setSelectedCustomer(c);
@@ -93,12 +100,7 @@ export default function CustomersPage() {
     return colors[index];
   };
 
-  const filteredCustomers = customers.filter(c => {
-    if (filterTier !== 'All Tiers' && (c.tier || 'regular').toLowerCase().replace('_', ' ') !== filterTier.toLowerCase()) return false;
-    if (filterCity !== 'All Cities' && (c.city || '').toLowerCase() !== filterCity.toLowerCase()) return false;
-    if (filterChannel !== 'All Channels' && (c.channel || 'whatsapp').toLowerCase() !== filterChannel.toLowerCase()) return false;
-    return true;
-  });
+  const filteredCustomers = customers;
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentCustomers = filteredCustomers.slice(startIndex, startIndex + itemsPerPage);
@@ -159,6 +161,20 @@ export default function CustomersPage() {
             <option>Email</option>
             <option>WhatsApp</option>
             <option>SMS</option>
+          </select>
+          <select 
+            className="appearance-none bg-surface border border-border-subtle shadow-inset rounded-[8px] py-2 pl-4 pr-10 text-[13px] text-text-primary focus:outline-none cursor-pointer hover:bg-elevated transition-colors"
+            value={filterProduct}
+            onChange={(e) => { setFilterProduct(e.target.value); setCurrentPage(1); }}
+          >
+            <option>All Products</option>
+            <option>Cold Brew Pack</option>
+            <option>Single Origin Beans</option>
+            <option>Espresso Blend</option>
+            <option>Brew Kit Starter</option>
+            <option>Filter Coffee Powder</option>
+            <option>Cold Brew Concentrate</option>
+            <option>Pour Over Kit</option>
           </select>
           <button 
             onClick={() => alert('CSV Upload is simulated. In a production environment, this would open a file picker and begin bulk importing.')}

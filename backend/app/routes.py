@@ -26,7 +26,7 @@ async def chat(req: ChatRequest):
 # ─── Customers ────────────────────────────────────────────────────────────────
 
 @router.get("/customers")
-async def list_customers(tier: Optional[str] = None, city: Optional[str] = None, channel: Optional[str] = None, joined_last_days: Optional[int] = None, limit: int = 100):
+async def list_customers(tier: Optional[str] = None, city: Optional[str] = None, channel: Optional[str] = None, product: Optional[str] = None, joined_last_days: Optional[int] = None, limit: int = 100):
     """
     Returns customers joined with computed order aggregates: total spend, order count, latest order date.
     """
@@ -47,6 +47,9 @@ async def list_customers(tier: Optional[str] = None, city: Optional[str] = None,
         conditions.append(f"LOWER(c.channel) = LOWER('{channel}')")
     if joined_last_days is not None:
         conditions.append(f"c.created_at >= NOW() - INTERVAL '{joined_last_days} days'")
+    if product:
+        product_safe = product.replace("'", "''")
+        conditions.append(f"EXISTS (SELECT 1 FROM orders o2 JOIN order_items oi ON o2.id = oi.order_id WHERE o2.customer_id = c.id AND oi.product ILIKE '%{product_safe}%')")
         
     if conditions:
         query += " WHERE " + " AND ".join(conditions)

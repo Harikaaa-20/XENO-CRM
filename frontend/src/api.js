@@ -21,6 +21,7 @@ export const getCustomers = (filters = {}) => {
   if (filters.tier) params.append("tier", filters.tier);
   if (filters.city) params.append("city", filters.city);
   if (filters.channel) params.append("channel", filters.channel);
+  if (filters.product) params.append("product", filters.product);
   if (filters.joined_last_days) params.append("joined_last_days", filters.joined_last_days);
   return fetch(`${BASE}/api/customers?${params.toString()}`).then(r => {
     if (!r.ok) throw new Error("Failed to fetch customers");
