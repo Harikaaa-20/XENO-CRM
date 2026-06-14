@@ -47,12 +47,6 @@ export default function ChatPage() {
     }
   }, [messages]);
 
-  // Handle URL query parameter if navigated from sidebar
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const q = params.get('q');
-    if (q && !loading && messages.length > 0) {
-      // Small timeout to let initial render finish
   const handleSend = async (textToSend) => {
     const text = textToSend || input;
     if (!text.trim() || loading) return;
@@ -90,6 +84,24 @@ export default function ChatPage() {
       setLoading(false);
     }
   };
+
+  // Handle URL query parameter if navigated from sidebar
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q');
+    if (q && !loading && messages.length > 0) {
+      // Small timeout to let initial render finish
+      setTimeout(() => {
+        handleSend(q);
+        // Remove q from URL so it doesn't fire again on refresh
+        navigate('/ai-assistant', { replace: true });
+      }, 100);
+    }
+  }, [location.search, messages.length]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') handleSend();
