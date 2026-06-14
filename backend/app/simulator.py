@@ -47,17 +47,17 @@ async def simulate_communication(comm_id: str, channel: str, campaign_id: str):
     
     if random.random() > rates["delivery"]:
         reason = random.choice(FAILURE_REASONS)
-        update_status(comm_id, "failed", campaign_id, failure_reason=reason)
+        await asyncio.to_thread(update_status, comm_id, "failed", campaign_id, reason)
         return
         
-    update_status(comm_id, "delivered", campaign_id)
+    await asyncio.to_thread(update_status, comm_id, "delivered", campaign_id)
     
     # 3-15 seconds to open
     await asyncio.sleep(random.uniform(3, 15))
     if random.random() < rates["open"]:
-        update_status(comm_id, "opened", campaign_id)
+        await asyncio.to_thread(update_status, comm_id, "opened", campaign_id)
         
         # 2-8 seconds to click
         await asyncio.sleep(random.uniform(2, 8))
         if random.random() < rates["click"]:
-            update_status(comm_id, "clicked", campaign_id)
+            await asyncio.to_thread(update_status, comm_id, "clicked", campaign_id)
