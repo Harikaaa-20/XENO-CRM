@@ -120,16 +120,28 @@ Return ONLY a valid JSON object with the exact keys: "whatsapp", "email", and "s
         return json.dumps({"error": f"Error drafting message: {str(e)}", "raw_output": content if 'content' in locals() else ""})
 
 
-@tool
-def send_campaign(name: str = "Campaign", segment_rule: dict = None, message: str = "", channel: str = "whatsapp", scheduled_at: str = None) -> str:
+class SendCampaignInput(BaseModel):
+    name: Optional[str] = "Campaign"
+    segment_rule: Optional[dict] = None
+    message: Optional[typing.Any] = ""
+    channel: Optional[str] = "whatsapp"
+    scheduled_at: Optional[str] = None
+
+import typing
+
+@tool(args_schema=SendCampaignInput)
+def send_campaign(**kwargs) -> str:
     """
     Send a campaign to a segment.
     """
     from app.database import supabase
     from app.segmentation import build_segment_query
 
-    if segment_rule is None:
-        segment_rule = {}
+    name = kwargs.get("name", "Campaign")
+    segment_rule = kwargs.get("segment_rule") or {}
+    message = kwargs.get("message", "")
+    channel = kwargs.get("channel", "whatsapp")
+    scheduled_at = kwargs.get("scheduled_at")
     
     campaign_id = str(uuid.uuid4())
     now_str = datetime.utcnow().isoformat() + "Z"
