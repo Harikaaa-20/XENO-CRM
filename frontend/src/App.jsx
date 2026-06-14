@@ -9,7 +9,6 @@ import ChatPage from './pages/ChatPage';
 import CustomersPage from './pages/CustomersPage';
 import CampaignsPage from './pages/CampaignsPage';
 import CampaignDetailPage from './pages/CampaignDetailPage';
-import AnalyticsPage from './pages/AnalyticsPage';
 import BrandHealthPage from './pages/BrandHealthPage';
 import OverviewPage from './pages/OverviewPage';
 import SettingsPage from './pages/SettingsPage';
@@ -31,7 +30,6 @@ function SidebarNav({ isOpen, onClose }) {
     { path: '/overview', label: 'Overview', icon: LayoutDashboard },
     { path: '/customers', label: 'Customers', icon: Users },
     { path: '/campaigns', label: 'Campaigns', icon: FolderKanban },
-    { path: '/analytics', label: 'Analytics', icon: Activity },
     { path: '/brand-health', label: 'Brand Health', icon: HeartPulse },
   ];
 
@@ -212,7 +210,7 @@ const ComingSoonPage = ({ title }) => (
       <Sparkles className="w-8 h-8 text-text-muted" />
     </div>
     <h2 className="text-[18px] font-semibold text-text-primary mb-2">{title}</h2>
-    <p className="text-[13px] text-text-muted text-center max-w-sm">This page is under construction. Please check out Customers, Analytics, or the AI Assistant.</p>
+    <p className="text-[13px] text-text-muted text-center max-w-sm">This page is under construction. Please check out Customers or the AI Assistant.</p>
   </div>
 );
 
@@ -224,7 +222,6 @@ export default function App() {
         <Route path="/customers" element={<MainLayout><CustomersPage /></MainLayout>} />
         <Route path="/campaigns" element={<MainLayout><CampaignsPage /></MainLayout>} />
         <Route path="/campaigns/:id" element={<MainLayout><CampaignDetailPage /></MainLayout>} />
-        <Route path="/analytics" element={<MainLayout><AnalyticsPage /></MainLayout>} />
         <Route path="/brand-health" element={<MainLayout><BrandHealthPage /></MainLayout>} />
         <Route path="/ai-assistant" element={<MainLayout><ChatPage /></MainLayout>} />
         <Route path="/settings" element={<MainLayout><SettingsPage /></MainLayout>} />

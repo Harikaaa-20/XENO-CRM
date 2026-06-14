@@ -25,7 +25,6 @@ Our philosophy: **"Chat to Segment. Chat to Draft. Chat to Send."**
 
 - 🧠 **AI-Powered Customer Segmentation**: Built with a LangChain Tool-Calling Agent and powered by **Gemini 2.5 Flash**. Ask, *"Find all customers in Mumbai who bought Cold Brew but haven't ordered in 30 days"* and the AI maps it directly into dynamic PostgreSQL queries via Supabase to instantly filter, retrieve, and show matching audience data.
 - ✍️ **Generative Campaign Copy**: The agent automatically drafts highly-converting, personalized marketing copy tailored to the targeted segment across WhatsApp, Email, and SMS.
-- 📊 **Interactive Analytics Dashboard**: A live, real-time Recharts dashboard that visualizes global sent/open/click metrics and engagement funnels.
 - 🔄 **Live Data Sync**: A seamless CSV ingest pipeline that automatically validates, deduplicates, and bulk-inserts new customer data directly into your CRM.
 - 🛡️ **"Human-in-the-Loop" Workflow**: The AI operates in a 3-step conversation (`Find` → `Draft` → `Send`), allowing marketers to review the audience size and the drafted copy before giving the final "Send" command.
 - 📡 **Mock Dispatch & Tracking**: Once dispatched, campaigns are handed off to an asynchronous Channel Service (simulating providers like Twilio/SendGrid) with exponential backoff retries and webhook delivery callbacks (Delivered, Opened, Clicked).
