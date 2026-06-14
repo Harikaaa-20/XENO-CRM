@@ -60,16 +60,12 @@ async def scheduler_worker():
                         "message": comm["message"]
                     })
                     
-                send_payload = {
-                    "communications": communications_payload,
-                    "callback_url": callback_url
-                }
-                
                 # 5. Dispatch
                 try:
-                    async with httpx.AsyncClient() as client:
-                        await client.post(channel_service_url, json=send_payload, timeout=10.0)
-                        logger.info(f"Worker dispatched {len(communications_payload)} communications for {camp['id']}")
+                    from app.simulator import simulate_communication
+                    for comm in comms:
+                        asyncio.create_task(simulate_communication(comm["id"], comm["channel"], camp["id"]))
+                    logger.info(f"Worker dispatched {len(comms)} communications for {camp['id']}")
                 except Exception as e:
                     logger.error(f"Worker dispatch failed for {camp['id']}: {e}")
                     

@@ -230,42 +230,24 @@ def send_campaign(**kwargs) -> str:
         except Exception as e:
             logger.warning(f"Failed to update campaign status to sent: {e}")
             
-        # 5. POST payload to channel service
-        channel_service_url = os.environ.get("CHANNEL_SERVICE_URL", "http://localhost:8001") + "/send"
-        backend_url = os.environ.get("BACKEND_URL", "http://localhost:8000")
-        callback_url = f"{backend_url}/api/campaigns/receipt"
+        # 5. Dispatch simulation internally to avoid missing channel-service deployments
+        from app.simulator import simulate_communication
         
-        communications_payload = []
-        for comm in comms_to_insert:
-            cust = next((x for x in customers if x["id"] == comm["customer_id"]), None)
-            communications_payload.append({
-                "communication_id": comm["id"],
-                "recipient_phone": cust.get("phone") if cust else None,
-                "recipient_email": cust.get("email") if cust else None,
-                "channel": comm["channel"],
-                "message": comm["message"]
-            })
-            
-        send_payload = {
-            "communications": communications_payload,
-            "callback_url": callback_url
-        }
-        
-        async def dispatch():
+        def start_simulation():
             try:
-                async with httpx.AsyncClient() as client:
-                    await client.post(channel_service_url, json=send_payload, timeout=10.0)
-                    logger.info(f"Dispatched {len(communications_payload)} communications to channel service.")
-            except Exception as e:
-                logger.error(f"Channel service dispatch failed: {e}")
+                loop = asyncio.get_running_loop()
+                for comm in comms_to_insert:
+                    loop.create_task(simulate_communication(comm["id"], comm["channel"], campaign_id))
+            except RuntimeError:
+                import threading
+                def run_sim():
+                    async def sim_all():
+                        tasks = [simulate_communication(c["id"], c["channel"], campaign_id) for c in comms_to_insert]
+                        await asyncio.gather(*tasks)
+                    asyncio.run(sim_all())
+                threading.Thread(target=run_sim, daemon=True).start()
                 
-        # Spawn dispatch task asynchronously on the current loop
-        try:
-            loop = asyncio.get_running_loop()
-            loop.create_task(dispatch())
-        except RuntimeError:
-            # Fallback if no loop is running
-            asyncio.run(dispatch())
+        start_simulation()
         
     return json.dumps({
         "campaign_id": campaign_id,
