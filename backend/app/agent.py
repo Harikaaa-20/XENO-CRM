@@ -78,11 +78,12 @@ Write a multi-channel win-back marketing campaign for this audience: {segment_su
 Tone: {tone}, engaging, and highly professional.
 
 CRITICAL INSTRUCTION: You MUST use the exact tag [Customer Name] in every single message so the system can dynamically personalize it.
+You MUST provide high-quality, creative, and compelling copy that includes an attractive offer (e.g., a discount or free shipping) to win them back. Do NOT just say "we miss you".
 
 Please write 3 distinct versions of the message:
-1. WhatsApp: max 300 chars, conversational, warm, include 1 emoji, no markdown.
-2. Email: Catchy Subject line + engaging Body text (2 short paragraphs). Make it feel personal and premium.
-3. SMS: max 160 chars, punchy, urgent, include a clear short CTA link.
+1. WhatsApp: 2-3 short sentences, conversational, warm, include 1-2 emojis, no markdown. Must include a clear offer and a call to action.
+2. Email: Catchy Subject line + engaging Body text (2 short paragraphs). Make it feel personal and premium, highlighting what's new.
+3. SMS: max 160 chars, punchy, urgent, include a clear short CTA link with the offer.
 
 Return ONLY a valid JSON object with the exact keys: "whatsapp", "email", and "sms". Do not wrap it in markdown block quotes."""
     
