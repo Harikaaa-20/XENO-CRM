@@ -9,7 +9,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from langchain_groq import ChatGroq
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.memory import ConversationBufferMemory
 from langchain.tools import tool
 from langchain.callbacks.base import BaseCallbackHandler
@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("xeno-agent")
 
 # Set up API Keys
-API_KEY = os.getenv("GROQ_API_KEY", "")
+API_KEY = os.getenv("GEMINI_API_KEY", os.getenv("GOOGLE_API_KEY", ""))
 
 # Memory management: session_id -> ConversationBufferMemory
 sessions: Dict[str, ConversationBufferMemory] = {}
@@ -105,7 +105,7 @@ Please write 3 distinct versions of the message:
 Return ONLY a valid JSON object with the exact keys: "whatsapp", "email", and "sms". Do not wrap it in markdown block quotes."""
     
     try:
-        temp_llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7, api_key=API_KEY)
+        temp_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.7, google_api_key=API_KEY)
         res = temp_llm.invoke(prompt_text)
         
         content = res.content.strip()
@@ -527,10 +527,10 @@ TOOLS_MAP = {t.name: t for t in TOOLS_LIST}
 async def run(message: str, session_id: str) -> dict:
     from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, ToolMessage
 
-    llm = ChatGroq(
-        model="llama-3.3-70b-versatile",
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
         temperature=0.3,
-        api_key=API_KEY
+        google_api_key=API_KEY
     ).bind_tools(TOOLS_LIST)
 
     memory = get_memory(session_id)
