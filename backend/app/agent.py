@@ -542,46 +542,9 @@ def get_at_risk_customers(dummy: str = "") -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
-# ─── Callback handler to capture tools and results ───────────────────────────
-
-class CaptureToolsCallbackHandler(BaseCallbackHandler):
-    def __init__(self):
-        super().__init__()
-        self.actions = []
-
-    def on_tool_start(self, serialized: dict, input_str: str, **kwargs) -> None:
-        self.actions.append({
-            "tool": serialized.get("name"),
-            "input": input_str,
-            "result": None
-        })
-
-    def on_tool_end(self, output: str, **kwargs) -> None:
-        if self.actions:
-            try:
-                self.actions[-1]["result"] = json.loads(output)
-            except Exception:
-                self.actions[-1]["result"] = output
-
 # ─── Agent Run entrypoint ─────────────────────────────────────────────────────
 
-
-async def run(message: str, session_id: str) -> dict:
-    from langchain.agents import create_tool_calling_agent, AgentExecutor
-    from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-
-    llm = ChatGroq(
-        model="llama-3.3-70b-versatile",
-        temperature=0.3,
-        api_key=API_KEY
-    )
-
-    tools = [
-        search_segment, draft_message, send_campaign, get_campaign_stats, get_brand_health_reviews,
-        get_customer_insights, get_revenue_insights, get_campaign_overview, get_at_risk_customers
-    ]
-
-    system_prompt = """You are an AI marketing assistant for Brew & Co, a premium DTC coffee brand.
+SYSTEM_PROMPT = """You are an AI marketing assistant for Brew & Co, a premium DTC coffee brand.
 Xeno CRM helps brands intelligently segment shoppers, generate personalized campaigns, and analyze engagement across WhatsApp, Email, SMS, and RCS.
 
 RULES:
@@ -602,37 +565,71 @@ Customer Segment Types:
 - Geo: Mumbai Premium, Bangalore Café Visitors, Delhi Delivery, Chennai Loyalty
 - Retention: At Risk, Lapsed Loyalty, Inactive 30+ Days"""
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        MessagesPlaceholder(variable_name="chat_history"),
-        ("human", "{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ])
+TOOLS_LIST = [
+    search_segment, draft_message, send_campaign, get_campaign_stats,
+    get_brand_health_reviews, get_customer_insights, get_revenue_insights,
+    get_campaign_overview, get_at_risk_customers
+]
+TOOLS_MAP = {t.name: t for t in TOOLS_LIST}
+
+
+async def run(message: str, session_id: str) -> dict:
+    from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, ToolMessage
+
+    llm = ChatGroq(
+        model="llama-3.3-70b-versatile",
+        temperature=0.3,
+        api_key=API_KEY
+    ).bind_tools(TOOLS_LIST)
 
     memory = get_memory(session_id)
+    chat_history = memory.chat_memory.messages if memory.chat_memory.messages else []
 
-    agent = create_tool_calling_agent(llm, tools, prompt)
+    messages = [SystemMessage(content=SYSTEM_PROMPT)] + chat_history + [HumanMessage(content=message)]
 
-    executor = AgentExecutor(
-        agent=agent,
-        tools=tools,
-        memory=memory,
-        verbose=True,
-        handle_parsing_errors=True,
-        max_iterations=8
-    )
+    actions = []
+    final_reply = ""
 
-    handler = CaptureToolsCallbackHandler()
+    for _ in range(8):  # max iterations
+        response = await llm.ainvoke(messages)
+        messages.append(response)
 
-    result = await executor.ainvoke(
-        {"input": message},
-        {"callbacks": [handler]}
-    )
+        if not response.tool_calls:
+            final_reply = response.content
+            break
 
-    formatted_actions = [{"tool": a["tool"], "result": a["result"]} for a in handler.actions]
+        # Execute each tool call
+        for tc in response.tool_calls:
+            tool_name = tc["name"]
+            tool_args = tc["args"]
+            tool_id = tc["id"]
+
+            logger.info(f"Calling tool: {tool_name} with args: {tool_args}")
+
+            tool_fn = TOOLS_MAP.get(tool_name)
+            if tool_fn:
+                try:
+                    # Extract the single string argument from the args dict
+                    arg_value = next(iter(tool_args.values()), "") if tool_args else ""
+                    tool_result = tool_fn.invoke(arg_value)
+                except Exception as e:
+                    tool_result = json.dumps({"error": str(e)})
+            else:
+                tool_result = json.dumps({"error": f"Unknown tool: {tool_name}"})
+
+            actions.append({
+                "tool": tool_name,
+                "result": json.loads(tool_result) if isinstance(tool_result, str) else tool_result
+            })
+
+            messages.append(ToolMessage(content=str(tool_result), tool_call_id=tool_id))
+
+    # Save to memory
+    memory.chat_memory.add_user_message(message)
+    memory.chat_memory.add_ai_message(final_reply or response.content)
 
     return {
-        "reply": result.get("output", ""),
-        "actions": formatted_actions,
+        "reply": final_reply or response.content,
+        "actions": actions,
         "session_id": session_id
     }
