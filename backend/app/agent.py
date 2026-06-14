@@ -35,6 +35,9 @@ def get_memory(session_id: str) -> ConversationBufferMemory:
 
 # ─── Tools definitions ────────────────────────────────────────────────────────
 
+class EmptyInput(BaseModel):
+    query: Optional[str] = None
+
 class SearchSegmentInput(BaseModel):
     inactive_days: Optional[int] = None
     active_days: Optional[int] = None
@@ -296,8 +299,8 @@ def get_campaign_stats(campaign_id: str = "") -> str:
     except Exception as e:
         return json.dumps({"error": f"Failed to retrieve stats from database: {str(e)}"})
 
-@tool
-def get_brand_health_reviews() -> str:
+@tool(args_schema=EmptyInput)
+def get_brand_health_reviews(**kwargs) -> str:
     """
     Get the latest customer feedback, sentiment, and pain points from App Store, Play Store, and Twitter reviews.
     Returns: JSON string containing recent customer reviews.
@@ -312,8 +315,8 @@ def get_brand_health_reviews() -> str:
     ]
     return json.dumps(reviews)
 
-@tool
-def get_customer_insights() -> str:
+@tool(args_schema=EmptyInput)
+def get_customer_insights(**kwargs) -> str:
     """
     Get customer insights like top 10 by spend, count by city/channel, new customers this month.
     """
@@ -346,8 +349,8 @@ def get_customer_insights() -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
-@tool
-def get_revenue_insights() -> str:
+@tool(args_schema=EmptyInput)
+def get_revenue_insights(**kwargs) -> str:
     """
     Get revenue insights including this month vs last month, MOM change, top 5 cities by revenue, and average order value.
     """
@@ -384,8 +387,8 @@ def get_revenue_insights() -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
-@tool
-def get_campaign_overview() -> str:
+@tool(args_schema=EmptyInput)
+def get_campaign_overview(**kwargs) -> str:
     """
     Get an overview of all campaigns, including status, open rates, and best performing channels/campaigns.
     """
@@ -455,8 +458,8 @@ def get_campaign_overview() -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
-@tool
-def get_at_risk_customers() -> str:
+@tool(args_schema=EmptyInput)
+def get_at_risk_customers(**kwargs) -> str:
     """
     Get at-risk customers across different segments to target for retention.
     """
