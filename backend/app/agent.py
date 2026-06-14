@@ -4,7 +4,7 @@ import uuid
 import httpx
 import asyncio
 import logging
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from datetime import datetime
 from dotenv import load_dotenv
 from pydantic import BaseModel
@@ -126,11 +126,9 @@ Return ONLY a valid JSON object with the exact keys: "whatsapp", "email", and "s
 class SendCampaignInput(BaseModel):
     name: Optional[str] = "Campaign"
     segment_rule: Optional[dict] = None
-    message: Optional[typing.Any] = ""
+    message: Optional[Any] = ""
     channel: Optional[str] = "whatsapp"
     scheduled_at: Optional[str] = None
-
-import typing
 
 @tool(args_schema=SendCampaignInput)
 def send_campaign(**kwargs) -> str:
