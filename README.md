@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="frontend/public/icons.svg" alt="Xeno CRM Logo" width="120" />
   
   # XENO CRM 🚀
   
@@ -35,7 +34,7 @@ Our philosophy: **"Chat to Segment. Chat to Draft. Chat to Send."**
 ## 🏗 System Architecture
 
 ```mermaid
-flowchart TB
+flowchart LR
     UI["React Frontend"] --> Router["FastAPI Backend"]
     
     subgraph AI Engine
